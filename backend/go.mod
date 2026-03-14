@@ -1,4 +1,4 @@
-module here-chat
+module github.com/barn0w1/chat/backend
 
 go 1.22
 
