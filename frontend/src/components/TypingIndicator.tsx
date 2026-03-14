@@ -1,8 +1,10 @@
+import { memo } from 'react'
+
 interface Props {
   typingUsers: string[]
 }
 
-export function TypingIndicator({ typingUsers }: Props) {
+export const TypingIndicator = memo(function TypingIndicator({ typingUsers }: Props) {
   const visible = typingUsers.length > 0
 
   const label = typingUsers.length === 1
@@ -18,7 +20,6 @@ export function TypingIndicator({ typingUsers }: Props) {
         pointerEvents: 'none',
       }}
     >
-      {/* Bouncing dots */}
       <div className="flex items-center gap-0.5">
         {[0, 1, 2].map((i) => (
           <span
@@ -29,7 +30,7 @@ export function TypingIndicator({ typingUsers }: Props) {
               height: 6,
               borderRadius: '50%',
               background: 'var(--md-sys-color-primary)',
-              animation: `bounce-dot 1.2s ease-in-out ${i * 0.2}s infinite`,
+              animation: visible ? `bounce-dot 1.2s ease-in-out ${i * 0.2}s infinite` : 'none',
             }}
           />
         ))}
@@ -47,4 +48,4 @@ export function TypingIndicator({ typingUsers }: Props) {
       )}
     </div>
   )
-}
+})

@@ -1,13 +1,20 @@
-import { useState } from 'react'
+import { memo, useState } from 'react'
 import type { User } from '../types'
 
+const MAX_VISIBLE_CHIPS = 3
+
 interface Props {
-  channel: number
+  channel:     number
   onlineUsers: User[]
+  connected:   boolean
 }
 
-export function TopAppBar({ channel, onlineUsers }: Props) {
+export const TopAppBar = memo(function TopAppBar({ channel, onlineUsers, connected }: Props) {
   const [jumpValue, setJumpValue] = useState('')
+  const [jumpFocused, setJumpFocused] = useState(false)
+
+  const visibleUsers  = onlineUsers.slice(0, MAX_VISIBLE_CHIPS)
+  const overflowCount = onlineUsers.length - MAX_VISIBLE_CHIPS
 
   const handleJumpKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key !== 'Enter') return
@@ -20,60 +27,92 @@ export function TopAppBar({ channel, onlineUsers }: Props) {
 
   return (
     <header
-      className="flex items-center gap-2 px-3 h-14 shrink-0 border-b"
+      className="shrink-0 border-b"
       style={{
         background: 'var(--surface-2)',
         borderColor: 'var(--md-sys-color-outline-variant)',
       }}
     >
-      {/* Channel badge */}
-      <span
-        className="text-sm font-semibold rounded-md-full px-3 py-1 shrink-0"
-        style={{
-          background: 'var(--md-sys-color-primary-container)',
-          color: 'var(--md-sys-color-on-primary-container)',
-          fontSize: 'var(--md-type-label-large)',
-        }}
-      >
-        # {channel}
-      </span>
+      <div className="flex items-center gap-2 px-3 h-14">
+        <span
+          className="font-semibold rounded-md-full px-3 py-1 shrink-0"
+          style={{
+            background: connected
+              ? 'var(--md-sys-color-primary-container)'
+              : 'var(--md-sys-color-surface-container-high)',
+            color: connected
+              ? 'var(--md-sys-color-on-primary-container)'
+              : 'var(--md-sys-color-on-surface-variant)',
+            fontSize: 'var(--md-type-label-large)',
+            transition: 'background 300ms, color 300ms',
+          }}
+        >
+          # {channel}
+        </span>
 
-      {/* Online user chips — scrollable */}
-      <div className="flex-1 flex items-center gap-1.5 overflow-x-auto scrollbar-none min-w-0">
-        {onlineUsers.map((u) => (
-          <span
-            key={`${u.emoji}${u.name}`}
-            className="flex items-center gap-1 shrink-0 px-2 py-0.5 rounded-md-small border text-xs whitespace-nowrap"
-            style={{
-              background: 'var(--md-sys-color-surface-container-low)',
-              borderColor: 'var(--md-sys-color-outline-variant)',
-              color: 'var(--md-sys-color-on-surface)',
-              fontSize: 'var(--md-type-label-medium)',
-            }}
-          >
-            <span>{u.emoji}</span>
-            <span>{u.name}</span>
-          </span>
-        ))}
+        <div className="flex-1 flex items-center gap-1.5 overflow-x-auto scrollbar-none min-w-0">
+          {visibleUsers.map((u) => (
+            <span
+              key={`${u.emoji}${u.name}`}
+              className="flex items-center gap-1 shrink-0 px-2 py-0.5 rounded-md-small border whitespace-nowrap"
+              style={{
+                background: 'var(--md-sys-color-surface-container-low)',
+                borderColor: 'var(--md-sys-color-outline-variant)',
+                color: 'var(--md-sys-color-on-surface)',
+                fontSize: 'var(--md-type-label-medium)',
+              }}
+            >
+              <span>{u.emoji}</span>
+              <span>{u.name}</span>
+            </span>
+          ))}
+          {overflowCount > 0 && (
+            <span
+              className="shrink-0 px-2 py-0.5 rounded-md-small border whitespace-nowrap"
+              style={{
+                background: 'var(--md-sys-color-surface-container-low)',
+                borderColor: 'var(--md-sys-color-outline-variant)',
+                color: 'var(--md-sys-color-on-surface-variant)',
+                fontSize: 'var(--md-type-label-medium)',
+              }}
+            >
+              +{overflowCount}
+            </span>
+          )}
+        </div>
+
+        <input
+          type="text"
+          inputMode="numeric"
+          value={jumpValue}
+          onChange={(e) => setJumpValue(e.target.value)}
+          onKeyDown={handleJumpKeyDown}
+          onFocus={() => setJumpFocused(true)}
+          onBlur={() => setJumpFocused(false)}
+          placeholder="Go to #"
+          className="w-16 h-8 text-center rounded-md-full outline-none shrink-0 transition-all duration-short4"
+          style={{
+            border: jumpFocused
+              ? '2px solid var(--md-sys-color-primary)'
+              : '1px solid var(--md-sys-color-outline)',
+            background: 'transparent',
+            color: 'var(--md-sys-color-on-surface)',
+            fontSize: 'var(--md-type-label-large)',
+          }}
+        />
       </div>
 
-      {/* Channel jump input */}
-      <input
-        type="number"
-        min={1}
-        max={256}
-        value={jumpValue}
-        onChange={(e) => setJumpValue(e.target.value)}
-        onKeyDown={handleJumpKeyDown}
-        placeholder="ch"
-        className="w-16 h-8 text-center rounded-md-full border bg-transparent outline-none shrink-0
-                   focus:border-[var(--md-sys-color-primary)] transition-colors duration-short4"
+      <div
+        className="overflow-hidden transition-all duration-medium2 flex items-center justify-center"
         style={{
-          borderColor: 'var(--md-sys-color-outline)',
-          color: 'var(--md-sys-color-on-surface)',
-          fontSize: 'var(--md-type-label-large)',
+          height: connected ? 0 : 24,
+          background: 'var(--md-sys-color-secondary-container)',
+          color: 'var(--md-sys-color-on-secondary-container)',
+          fontSize: 'var(--md-type-label-medium)',
         }}
-      />
+      >
+        Reconnecting…
+      </div>
     </header>
   )
-}
+})

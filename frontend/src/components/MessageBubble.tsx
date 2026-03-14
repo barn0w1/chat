@@ -1,23 +1,29 @@
+import { memo } from 'react'
 import type { ChatMsg } from '../types'
 
+const timeFormatter = new Intl.DateTimeFormat(undefined, { hour: '2-digit', minute: '2-digit' })
+
 interface Props {
-  msg: ChatMsg
+  msg:   ChatMsg
   isOwn: boolean
-  grouped: boolean
 }
 
-export function MessageBubble({ msg, isOwn, grouped }: Props) {
-  const radiusOwn    = grouped
+export const MessageBubble = memo(function MessageBubble({ msg, isOwn }: Props) {
+  const { grouped, isLastInGroup } = msg
+
+  const radiusOwn = grouped
     ? 'rounded-md-large'
     : 'rounded-tl-md-large rounded-tr-md-extra-small rounded-br-md-large rounded-bl-md-large'
 
-  const radiusOther  = grouped
+  const radiusOther = grouped
     ? 'rounded-md-large'
     : 'rounded-tl-md-extra-small rounded-tr-md-large rounded-br-md-large rounded-bl-md-large'
 
   return (
-    <div className={`flex items-end gap-2 px-3 ${isOwn ? 'flex-row-reverse' : 'flex-row'} ${grouped ? 'mt-0.5' : 'mt-3'}`}>
-      {/* Avatar — only for others, hidden when grouped */}
+    <div
+      className={`flex items-end gap-2 px-3 ${isOwn ? 'flex-row-reverse' : 'flex-row'} ${grouped ? 'mt-0.5' : 'mt-3'}`}
+      style={{ contentVisibility: 'auto', containIntrinsicSize: '0 64px' }}
+    >
       {!isOwn && (
         <div
           className="w-8 h-8 rounded-full flex items-center justify-center text-base shrink-0"
@@ -31,7 +37,6 @@ export function MessageBubble({ msg, isOwn, grouped }: Props) {
       )}
 
       <div className={`flex flex-col ${isOwn ? 'items-end' : 'items-start'} max-w-[70%]`}>
-        {/* Sender name — others only, hidden when grouped */}
         {!isOwn && !grouped && (
           <span
             className="mb-0.5 px-1"
@@ -44,9 +49,8 @@ export function MessageBubble({ msg, isOwn, grouped }: Props) {
           </span>
         )}
 
-        {/* Bubble */}
         <div
-          className={`px-4 py-2 ${isOwn ? radiusOwn : radiusOther} ${msg.live ? 'animate-slide-up-fade' : ''}`}
+          className={`px-4 py-2 ${isOwn ? radiusOwn : radiusOther} ${msg.isNew ? 'animate-slide-up-fade' : ''}`}
           style={{
             background: isOwn
               ? 'var(--md-sys-color-primary-container)'
@@ -61,18 +65,19 @@ export function MessageBubble({ msg, isOwn, grouped }: Props) {
           {msg.text}
         </div>
 
-        {/* Timestamp */}
-        <span
-          className="mt-0.5 px-1"
-          style={{
-            fontSize: 'var(--md-type-label-small)',
-            color: 'var(--md-sys-color-on-surface-variant)',
-            opacity: 0.7,
-          }}
-        >
-          {new Date(msg.ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-        </span>
+        {isLastInGroup && (
+          <span
+            className="mt-0.5 px-1"
+            style={{
+              fontSize: 'var(--md-type-label-small)',
+              color: 'var(--md-sys-color-on-surface-variant)',
+              opacity: 0.7,
+            }}
+          >
+            {timeFormatter.format(new Date(msg.ts))}
+          </span>
+        )}
       </div>
     </div>
   )
-}
+})

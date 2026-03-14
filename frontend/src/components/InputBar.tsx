@@ -1,8 +1,8 @@
-import { useState, useRef } from 'react'
+import { memo, useState, useRef } from 'react'
 
 interface Props {
-  onSend:   (text: string) => void
-  onInput:  () => void
+  onSend:    (text: string) => void
+  onInput:   () => void
   disabled?: boolean
 }
 
@@ -14,17 +14,10 @@ function SendIcon() {
   )
 }
 
-export function InputBar({ onSend, onInput, disabled }: Props) {
-  const [text, setText] = useState('')
-  const inputRef = useRef<HTMLTextAreaElement>(null)
+export const InputBar = memo(function InputBar({ onSend, onInput, disabled }: Props) {
+  const [text, setText]       = useState('')
   const [focused, setFocused] = useState(false)
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault()
-      handleSend()
-    }
-  }
+  const inputRef = useRef<HTMLTextAreaElement>(null)
 
   const handleSend = () => {
     const trimmed = text.trim()
@@ -32,6 +25,13 @@ export function InputBar({ onSend, onInput, disabled }: Props) {
     onSend(trimmed)
     setText('')
     inputRef.current?.focus()
+  }
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault()
+      handleSend()
+    }
   }
 
   return (
@@ -42,7 +42,6 @@ export function InputBar({ onSend, onInput, disabled }: Props) {
         borderColor: 'var(--md-sys-color-outline-variant)',
       }}
     >
-      {/* MD3 Filled text field */}
       <div className="flex-1 relative">
         <textarea
           ref={inputRef}
@@ -60,8 +59,8 @@ export function InputBar({ onSend, onInput, disabled }: Props) {
             color: 'var(--md-sys-color-on-surface)',
             borderRadius: '4px 4px 0 0',
             borderBottom: focused
-              ? `2px solid var(--md-sys-color-primary)`
-              : `1px solid var(--md-sys-color-outline-variant)`,
+              ? '2px solid var(--md-sys-color-primary)'
+              : '1px solid var(--md-sys-color-outline-variant)',
             fontSize: 'var(--md-type-body-large)',
             lineHeight: '1.5',
             maxHeight: 120,
@@ -75,13 +74,11 @@ export function InputBar({ onSend, onInput, disabled }: Props) {
         />
       </div>
 
-      {/* Send FAB */}
       <button
         onClick={handleSend}
         disabled={!text.trim() || disabled}
         className="w-14 h-14 rounded-md-large flex items-center justify-center shrink-0
-                   transition-transform duration-short2 active:scale-95
-                   disabled:opacity-40"
+                   transition-transform duration-short2 active:scale-95 disabled:opacity-40"
         style={{
           background: 'var(--md-sys-color-primary-container)',
           color: 'var(--md-sys-color-on-primary-container)',
@@ -93,4 +90,4 @@ export function InputBar({ onSend, onInput, disabled }: Props) {
       </button>
     </div>
   )
-}
+})
