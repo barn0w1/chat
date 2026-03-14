@@ -2,7 +2,7 @@
     auto_https off
 }
 
-c.hss-science.org {
+http://c.hss-science.org {
     handle /ws/* {
         reverse_proxy backend:8080
     }
