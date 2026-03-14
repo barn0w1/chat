@@ -1,31 +1,50 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+@theme {
+  /* MD3 Shape tokens */
+  --radius-md-extra-small: 4px;
+  --radius-md-small:       8px;
+  --radius-md-medium:      12px;
+  --radius-md-large:       16px;
+  --radius-md-extra-large: 28px;
+  --radius-md-full:        9999px;
+
+  /* MD3 Motion — easing */
+  --ease-md-standard:         cubic-bezier(0.2, 0, 0, 1);
+  --ease-md-standard-decel:   cubic-bezier(0, 0, 0, 1);
+  --ease-md-emphasized-decel: cubic-bezier(0.05, 0.7, 0.1, 1);
+
+  /* MD3 Motion — duration */
+  --duration-short2:  100ms;
+  --duration-short4:  200ms;
+  --duration-medium2: 300ms;
+  --duration-medium4: 400ms;
+}
 
 :root {
-  /* MD3 Light Scheme */
-  --md-sys-color-primary:                    #6750A4;
-  --md-sys-color-on-primary:                 #FFFFFF;
-  --md-sys-color-primary-container:          #EADDFF;
-  --md-sys-color-on-primary-container:       #21005D;
-  --md-sys-color-secondary:                  #625B71;
-  --md-sys-color-on-secondary:               #FFFFFF;
-  --md-sys-color-secondary-container:        #E8DEF8;
-  --md-sys-color-on-secondary-container:     #1D192B;
-  --md-sys-color-surface:                    #FFFBFE;
-  --md-sys-color-on-surface:                 #1C1B1F;
-  --md-sys-color-surface-variant:            #E7E0EC;
-  --md-sys-color-on-surface-variant:         #49454F;
-  --md-sys-color-surface-container-lowest:   #FFFFFF;
-  --md-sys-color-surface-container-low:      #F7F2FA;
-  --md-sys-color-surface-container:          #F3EDF7;
-  --md-sys-color-surface-container-high:     #ECE6F0;
-  --md-sys-color-surface-container-highest:  #E6E0E9;
-  --md-sys-color-outline:                    #79747E;
-  --md-sys-color-outline-variant:            #CAC4D0;
-  --md-sys-color-inverse-surface:            #313033;
-  --md-sys-color-inverse-on-surface:         #F4EFF4;
-  --md-sys-color-inverse-primary:            #D0BCFF;
+  /* MD3 Light Scheme — color tokens */
+  --md-sys-color-primary:                   #6750A4;
+  --md-sys-color-on-primary:                #FFFFFF;
+  --md-sys-color-primary-container:         #EADDFF;
+  --md-sys-color-on-primary-container:      #21005D;
+  --md-sys-color-secondary:                 #625B71;
+  --md-sys-color-on-secondary:              #FFFFFF;
+  --md-sys-color-secondary-container:       #E8DEF8;
+  --md-sys-color-on-secondary-container:    #1D192B;
+  --md-sys-color-surface:                   #FFFBFE;
+  --md-sys-color-on-surface:                #1C1B1F;
+  --md-sys-color-surface-variant:           #E7E0EC;
+  --md-sys-color-on-surface-variant:        #49454F;
+  --md-sys-color-surface-container-lowest:  #FFFFFF;
+  --md-sys-color-surface-container-low:     #F7F2FA;
+  --md-sys-color-surface-container:         #F3EDF7;
+  --md-sys-color-surface-container-high:    #ECE6F0;
+  --md-sys-color-surface-container-highest: #E6E0E9;
+  --md-sys-color-outline:                   #79747E;
+  --md-sys-color-outline-variant:           #CAC4D0;
+  --md-sys-color-inverse-surface:           #313033;
+  --md-sys-color-inverse-on-surface:        #F4EFF4;
+  --md-sys-color-inverse-primary:           #D0BCFF;
 
   /* Tonal elevation surfaces */
   --surface-1: color-mix(in srgb, #6750A4  5%, #FFFBFE);
@@ -34,21 +53,15 @@
   --surface-4: color-mix(in srgb, #6750A4 12%, #FFFBFE);
 
   /* MD3 Type scale */
-  --md-type-display-large:      57px;
-  --md-type-display-medium:     45px;
-  --md-type-display-small:      36px;
-  --md-type-headline-large:     32px;
-  --md-type-headline-medium:    28px;
-  --md-type-headline-small:     24px;
-  --md-type-title-large:        22px;
-  --md-type-title-medium:       16px;
-  --md-type-title-small:        14px;
-  --md-type-body-large:         16px;
-  --md-type-body-medium:        14px;
-  --md-type-body-small:         12px;
-  --md-type-label-large:        14px;
-  --md-type-label-medium:       12px;
-  --md-type-label-small:        11px;
+  --md-type-headline-large:  32px;
+  --md-type-headline-small:  24px;
+  --md-type-title-large:     22px;
+  --md-type-title-medium:    16px;
+  --md-type-body-large:      16px;
+  --md-type-body-medium:     14px;
+  --md-type-label-large:     14px;
+  --md-type-label-medium:    12px;
+  --md-type-label-small:     11px;
 
   font-family: 'Roboto Flex', system-ui, sans-serif;
   font-synthesis: none;
@@ -56,7 +69,7 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
-* {
+*, *::before, *::after {
   box-sizing: border-box;
 }
 
@@ -71,3 +84,18 @@ html, body, #root {
 .md-elevation-1 { box-shadow: 0 1px 2px rgba(0,0,0,.3), 0 1px 3px 1px rgba(0,0,0,.15); }
 .md-elevation-2 { box-shadow: 0 1px 2px rgba(0,0,0,.3), 0 2px 6px 2px rgba(0,0,0,.15); }
 .md-elevation-3 { box-shadow: 0 4px 8px 3px rgba(0,0,0,.15), 0 1px 3px rgba(0,0,0,.3); }
+
+/* Typing dots animation */
+@keyframes bounce-dot {
+  0%, 80%, 100% { transform: translateY(0); }
+  40%           { transform: translateY(-5px); }
+}
+
+/* Bubble entrance animation */
+@keyframes slide-up-fade {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.animate-slide-up-fade {
+  animation: slide-up-fade 200ms cubic-bezier(0, 0, 0, 1) both;
+}
