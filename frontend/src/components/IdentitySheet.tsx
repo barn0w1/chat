@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { memo, useEffect, useRef, useState } from 'react'
 import type { Identity } from '../types'
 
 const EMOJIS = [
@@ -7,31 +7,42 @@ const EMOJIS = [
 ]
 
 interface Props {
-  onSubmit: (identity: Identity) => void
+  onSubmit:  (identity: Identity) => void
+  onDismiss: () => void
 }
 
-export function IdentitySheet({ onSubmit }: Props) {
-  const [visible, setVisible] = useState(false)
-  const [name, setName]       = useState('')
-  const [emoji, setEmoji]     = useState(EMOJIS[0])
+export const IdentitySheet = memo(function IdentitySheet({ onSubmit, onDismiss }: Props) {
+  const [visible, setVisible]         = useState(false)
+  const [name, setName]               = useState('')
+  const [emoji, setEmoji]             = useState(EMOJIS[0])
   const [nameFocused, setNameFocused] = useState(false)
+  const closingRef = useRef(false)
+  const nameRef    = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
-    const id = requestAnimationFrame(() => setVisible(true))
-    return () => cancelAnimationFrame(id)
+    const raf = requestAnimationFrame(() => {
+      setVisible(true)
+      nameRef.current?.focus()
+    })
+    return () => cancelAnimationFrame(raf)
   }, [])
 
   const handleSubmit = () => {
     const trimmed = name.trim()
     if (!trimmed) return
-    const identity: Identity = { name: trimmed, emoji }
-    localStorage.setItem('identity', JSON.stringify(identity))
-    onSubmit(identity)
+    onSubmit({ name: trimmed, emoji })
+    closingRef.current = true
+    setVisible(false)
+  }
+
+  const handleSheetTransitionEnd = (e: React.TransitionEvent<HTMLDivElement>) => {
+    if (closingRef.current && e.propertyName === 'transform') {
+      onDismiss()
+    }
   }
 
   return (
     <>
-      {/* Scrim */}
       <div
         className="fixed inset-0 transition-opacity duration-medium2"
         style={{
@@ -41,7 +52,6 @@ export function IdentitySheet({ onSubmit }: Props) {
         }}
       />
 
-      {/* Sheet */}
       <div
         className="fixed bottom-0 left-0 right-0 flex flex-col pb-8 px-4 pt-2
                    transition-transform duration-medium4 ease-md-emphasized-decel"
@@ -53,8 +63,8 @@ export function IdentitySheet({ onSubmit }: Props) {
           maxWidth: 600,
           margin: '0 auto',
         }}
+        onTransitionEnd={handleSheetTransitionEnd}
       >
-        {/* Drag handle */}
         <div className="flex justify-center py-2">
           <div
             style={{
@@ -67,7 +77,6 @@ export function IdentitySheet({ onSubmit }: Props) {
           />
         </div>
 
-        {/* Title */}
         <h2
           className="mt-2 mb-1"
           style={{
@@ -79,7 +88,6 @@ export function IdentitySheet({ onSubmit }: Props) {
           Who are you?
         </h2>
 
-        {/* Subtitle */}
         <p
           className="mb-6"
           style={{
@@ -90,7 +98,6 @@ export function IdentitySheet({ onSubmit }: Props) {
           No account needed — just pick a name and an emoji.
         </p>
 
-        {/* Outlined text field */}
         <div className="relative mb-6">
           <label
             className="absolute left-3 transition-all duration-short4 pointer-events-none"
@@ -109,6 +116,7 @@ export function IdentitySheet({ onSubmit }: Props) {
             Name
           </label>
           <input
+            ref={nameRef}
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
@@ -119,8 +127,8 @@ export function IdentitySheet({ onSubmit }: Props) {
             className="w-full h-14 px-4 outline-none rounded-md-extra-small transition-all duration-short4"
             style={{
               border: nameFocused
-                ? `2px solid var(--md-sys-color-primary)`
-                : `1px solid var(--md-sys-color-outline)`,
+                ? '2px solid var(--md-sys-color-primary)'
+                : '1px solid var(--md-sys-color-outline)',
               background: 'transparent',
               color: 'var(--md-sys-color-on-surface)',
               fontSize: 'var(--md-type-body-large)',
@@ -128,7 +136,6 @@ export function IdentitySheet({ onSubmit }: Props) {
           />
         </div>
 
-        {/* Emoji grid */}
         <div
           className="grid gap-2 mb-6"
           style={{ gridTemplateColumns: 'repeat(10, 1fr)' }}
@@ -137,8 +144,7 @@ export function IdentitySheet({ onSubmit }: Props) {
             <button
               key={e}
               onClick={() => setEmoji(e)}
-              className="aspect-square flex items-center justify-center rounded-md-small
-                         transition-all duration-short4"
+              className="aspect-square flex items-center justify-center rounded-md-small transition-all duration-short4"
               style={{
                 fontSize: 20,
                 background: emoji === e
@@ -154,7 +160,6 @@ export function IdentitySheet({ onSubmit }: Props) {
           ))}
         </div>
 
-        {/* Submit */}
         <div className="flex justify-end">
           <button
             onClick={handleSubmit}
@@ -174,4 +179,4 @@ export function IdentitySheet({ onSubmit }: Props) {
       </div>
     </>
   )
-}
+})

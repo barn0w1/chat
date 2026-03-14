@@ -1,22 +1,23 @@
-import { useState, useEffect } from 'react'
+import { memo, useState, useEffect } from 'react'
 import type { SnackbarItem } from '../types'
 
 interface SingleProps {
-  text:      string
-  onDismiss: () => void
+  id:       string
+  text:     string
+  onRemove: (id: string) => void
 }
 
-function Snackbar({ text, onDismiss }: SingleProps) {
+const Snackbar = memo(function Snackbar({ id, text, onRemove }: SingleProps) {
   const [visible, setVisible] = useState(false)
 
   useEffect(() => {
     const raf = requestAnimationFrame(() => setVisible(true))
     const timer = setTimeout(() => {
       setVisible(false)
-      setTimeout(onDismiss, 200)
+      setTimeout(() => onRemove(id), 200)
     }, 3000)
     return () => { cancelAnimationFrame(raf); clearTimeout(timer) }
-  }, [onDismiss])
+  }, [id, onRemove])
 
   return (
     <div
@@ -36,22 +37,22 @@ function Snackbar({ text, onDismiss }: SingleProps) {
       {text}
     </div>
   )
-}
+})
 
 interface StackProps {
   items:    SnackbarItem[]
   onRemove: (id: string) => void
 }
 
-export function SnackbarStack({ items, onRemove }: StackProps) {
+export const SnackbarStack = memo(function SnackbarStack({ items, onRemove }: StackProps) {
   return (
     <div
       className="fixed bottom-4 left-1/2 -translate-x-1/2 flex flex-col-reverse gap-2 items-center"
       style={{ zIndex: 100, pointerEvents: 'none' }}
     >
       {items.map((item) => (
-        <Snackbar key={item.id} text={item.text} onDismiss={() => onRemove(item.id)} />
+        <Snackbar key={item.id} id={item.id} text={item.text} onRemove={onRemove} />
       ))}
     </div>
   )
-}
+})
