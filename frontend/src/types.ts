@@ -14,7 +14,9 @@ export interface ChatMsg {
   emoji: string
   text: string
   ts: number
-  live: boolean
+  isNew: boolean
+  grouped: boolean
+  isLastInGroup: boolean
 }
 
 export interface SnackbarItem {
@@ -22,7 +24,6 @@ export interface SnackbarItem {
   text: string
 }
 
-// Server → client wire types
 export interface WireHistory {
   type: 'history'
   msgs: WireStoredMsg[]

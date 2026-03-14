@@ -1,26 +1,46 @@
-import { useEffect, useRef, useCallback, useState } from 'react'
-import type { Identity, User, WireStoredMsg, WireMsg } from '../types'
+import { useEffect, useRef, useCallback } from 'react'
+import type { Dispatch } from 'react'
+import type { ChatAction } from '../state/actions'
+import type { Identity, ServerEvent, WireStoredMsg, User } from '../types'
 
-interface WSCallbacks {
-  onHistory: (msgs: WireStoredMsg[]) => void
-  onMsg:     (msg: WireMsg) => void
-  onJoin:    (name: string, emoji: string, ts: number) => void
-  onLeave:   (name: string, emoji: string, ts: number) => void
-  onOnline:  (users: User[]) => void
-  onTyping:  (name: string, active: boolean) => void
+function parseEvent(raw: string): ServerEvent | null {
+  let parsed: unknown
+  try { parsed = JSON.parse(raw) } catch { return null }
+  if (typeof parsed !== 'object' || parsed === null) return null
+  const obj = parsed as Record<string, unknown>
+  switch (obj.type) {
+    case 'history':
+      return { type: 'history', msgs: (obj.msgs as WireStoredMsg[]) ?? [] }
+    case 'msg':
+      return {
+        type: 'msg',
+        name: obj.name as string,
+        emoji: obj.emoji as string,
+        text: obj.text as string,
+        ts: obj.ts as number,
+      }
+    case 'join':
+      return { type: 'join', name: obj.name as string, emoji: obj.emoji as string, ts: obj.ts as number }
+    case 'leave':
+      return { type: 'leave', name: obj.name as string, emoji: obj.emoji as string, ts: obj.ts as number }
+    case 'online':
+      return { type: 'online', users: (obj.users as User[]) ?? [] }
+    case 'typing':
+      return { type: 'typing', name: obj.name as string, active: obj.active as boolean }
+    default:
+      return null
+  }
 }
 
 export function useWebSocket(
   channel: number,
   identity: Identity | null,
-  callbacks: WSCallbacks,
+  dispatch: Dispatch<ChatAction>,
 ) {
-  const [connected, setConnected]     = useState(false)
-  const [reconnecting, setReconnecting] = useState(false)
-  const wsRef  = useRef<WebSocket | null>(null)
-  const cbRef  = useRef(callbacks)
+  const wsRef      = useRef<WebSocket | null>(null)
+  const dispatchRef = useRef(dispatch)
 
-  useEffect(() => { cbRef.current = callbacks })
+  useEffect(() => { dispatchRef.current = dispatch })
 
   const send = useCallback((data: object) => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {
@@ -43,42 +63,31 @@ export function useWebSocket(
       wsRef.current = ws
 
       ws.onopen = () => {
-        setConnected(true)
-        setReconnecting(false)
+        dispatchRef.current({ type: 'SET_CONNECTED', connected: true })
         ws.send(JSON.stringify({ type: 'join', name: identity.name, emoji: identity.emoji }))
       }
 
       ws.onmessage = (e: MessageEvent<string>) => {
-        let msg: Record<string, unknown>
-        try { msg = JSON.parse(e.data) as Record<string, unknown> }
-        catch { return }
-
-        switch (msg.type) {
-          case 'history':
-            cbRef.current.onHistory((msg.msgs as WireStoredMsg[]) ?? [])
-            break
-          case 'msg':
-            cbRef.current.onMsg(msg as unknown as WireMsg)
-            break
-          case 'join':
-            cbRef.current.onJoin(msg.name as string, msg.emoji as string, msg.ts as number)
-            break
-          case 'leave':
-            cbRef.current.onLeave(msg.name as string, msg.emoji as string, msg.ts as number)
-            break
-          case 'online':
-            cbRef.current.onOnline((msg.users as User[]) ?? [])
-            break
+        const event = parseEvent(e.data)
+        if (!event) return
+        const d = dispatchRef.current
+        switch (event.type) {
+          case 'history':  d({ type: 'HISTORY',      msgs: event.msgs });                          break
+          case 'msg':      d({ type: 'MSG_RECEIVED',  msg: event });                                break
+          case 'join':     d({ type: 'JOIN',          name: event.name, emoji: event.emoji });      break
+          case 'leave':    d({ type: 'LEAVE',         name: event.name, emoji: event.emoji });      break
+          case 'online':   d({ type: 'ONLINE',        users: event.users });                        break
           case 'typing':
-            cbRef.current.onTyping(msg.name as string, msg.active as boolean)
+            d(event.active
+              ? { type: 'TYPING_START', name: event.name }
+              : { type: 'TYPING_STOP',  name: event.name })
             break
         }
       }
 
       ws.onclose = () => {
-        setConnected(false)
+        dispatchRef.current({ type: 'SET_CONNECTED', connected: false })
         if (!closed) {
-          setReconnecting(true)
           retryTimer = setTimeout(connect, 3000)
         }
       }
@@ -95,5 +104,5 @@ export function useWebSocket(
     }
   }, [channel, identity?.name, identity?.emoji])
 
-  return { send, connected, reconnecting }
+  return { send }
 }
