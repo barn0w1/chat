@@ -1,1 +1,785 @@
-placeholder
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>here-chat</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Roboto+Flex:opsz,wght@8..144,100..900&display=swap" rel="stylesheet" />
+  <style>
+    /* ── MD3 dark scheme color tokens ─────────────────────────────── */
+    :root {
+      --md-sys-color-primary:                #D0BCFF;
+      --md-sys-color-on-primary:             #381E72;
+      --md-sys-color-primary-container:      #4F378B;
+      --md-sys-color-on-primary-container:   #EADDFF;
+      --md-sys-color-surface:                #141218;
+      --md-sys-color-surface-variant:        #49454F;
+      --md-sys-color-on-surface:             #E6E1E5;
+      --md-sys-color-on-surface-variant:     #CAC4D0;
+      --md-sys-color-outline:                #938F99;
+      --md-sys-color-outline-variant:        #49454F;
+      --md-sys-color-secondary-container:    #4A4458;
+      --md-sys-color-on-secondary-container: #E8DEF8;
+
+      /* Tonal surface elevations via primary tint */
+      --surface-1: color-mix(in srgb, var(--md-sys-color-primary)  5%,  var(--md-sys-color-surface));
+      --surface-2: color-mix(in srgb, var(--md-sys-color-primary)  8%,  var(--md-sys-color-surface));
+      --surface-3: color-mix(in srgb, var(--md-sys-color-primary) 11%,  var(--md-sys-color-surface));
+      --surface-4: color-mix(in srgb, var(--md-sys-color-primary) 12%,  var(--md-sys-color-surface));
+    }
+
+    /* ── MD3 type scale ────────────────────────────────────────────── */
+    :root {
+      --type-display-small:  36px;
+      --type-headline-small: 24px;
+      --type-title-large:    22px;
+      --type-title-medium:   16px;
+      --type-title-small:    14px;
+      --type-body-large:     16px;
+      --type-body-medium:    14px;
+      --type-body-small:     12px;
+      --type-label-large:    14px;
+      --type-label-medium:   12px;
+      --type-label-small:    11px;
+    }
+
+    /* ── Reset ─────────────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      height: 100%;
+      overflow: hidden;
+      background: var(--md-sys-color-surface);
+      color: var(--md-sys-color-on-surface);
+      font-family: 'Roboto Flex', sans-serif;
+      font-size: var(--type-body-large);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── App shell ─────────────────────────────────────────────────── */
+    .app {
+      display: flex;
+      flex-direction: column;
+      height: 100dvh;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    /* ── Top App Bar ───────────────────────────────────────────────── */
+    .top-app-bar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 0 16px;
+      height: 64px;
+      background: var(--surface-2);
+      border-bottom: 1px solid var(--md-sys-color-outline-variant);
+      flex-shrink: 0;
+      z-index: 10;
+    }
+
+    .channel-title {
+      font-size: var(--type-title-large);
+      font-weight: 500;
+      color: var(--md-sys-color-on-surface);
+      white-space: nowrap;
+      letter-spacing: 0.01em;
+    }
+
+    .online-chips {
+      display: flex;
+      flex-wrap: nowrap;
+      gap: 6px;
+      flex: 1;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .online-chips::-webkit-scrollbar { display: none; }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 10px;
+      background: var(--md-sys-color-secondary-container);
+      color: var(--md-sys-color-on-secondary-container);
+      border-radius: 8px;
+      font-size: var(--type-label-medium);
+      font-weight: 500;
+      white-space: nowrap;
+      letter-spacing: 0.05em;
+    }
+
+    .channel-jump {
+      width: 80px;
+      height: 36px;
+      padding: 0 12px;
+      background: var(--md-sys-color-surface-variant);
+      border: 1.5px solid var(--md-sys-color-outline);
+      border-radius: 28px;
+      color: var(--md-sys-color-on-surface);
+      font-family: inherit;
+      font-size: var(--type-body-medium);
+      text-align: center;
+      outline: none;
+      transition: border-color 0.2s;
+      -moz-appearance: textfield;
+    }
+    .channel-jump::-webkit-outer-spin-button,
+    .channel-jump::-webkit-inner-spin-button { -webkit-appearance: none; }
+    .channel-jump:focus { border-color: var(--md-sys-color-primary); }
+
+    /* ── Message list ──────────────────────────────────────────────── */
+    .message-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px 16px 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      scrollbar-width: thin;
+      scrollbar-color: var(--md-sys-color-outline-variant) transparent;
+    }
+
+    /* ── Message rows ──────────────────────────────────────────────── */
+    .msg-row {
+      display: flex;
+      animation: slideInMsg 250ms cubic-bezier(0.2, 0, 0, 1) both;
+    }
+    .msg-row.own   { justify-content: flex-end; }
+    .msg-row.other { justify-content: flex-start; }
+
+    @keyframes slideInMsg {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .msg-wrap {
+      max-width: 72%;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .msg-meta {
+      font-size: var(--type-label-small);
+      color: var(--md-sys-color-on-surface-variant);
+      padding: 0 10px;
+      letter-spacing: 0.04em;
+    }
+
+    .msg-bubble {
+      padding: 10px 14px;
+      font-size: var(--type-body-medium);
+      line-height: 1.5;
+      word-break: break-word;
+    }
+
+    /* Own bubble — primary-container, top-right corner 4px */
+    .msg-row.own .msg-bubble {
+      background: var(--md-sys-color-primary-container);
+      color: var(--md-sys-color-on-primary-container);
+      border-radius: 18px 4px 18px 18px;
+    }
+
+    /* Other bubble — surface-variant, top-left corner 4px */
+    .msg-row.other .msg-bubble {
+      background: var(--md-sys-color-surface-variant);
+      color: var(--md-sys-color-on-surface);
+      border-radius: 4px 18px 18px 18px;
+    }
+
+    .msg-time {
+      font-size: var(--type-label-small);
+      color: var(--md-sys-color-on-surface-variant);
+      padding: 0 10px;
+      opacity: 0.7;
+    }
+    .msg-row.own  .msg-time { text-align: right; }
+    .msg-row.other .msg-time { text-align: left; }
+
+    /* ── Bottom area (typing + input) ──────────────────────────────── */
+    .bottom-area {
+      flex-shrink: 0;
+      padding: 4px 16px 16px;
+      background: var(--surface-1);
+      border-top: 1px solid var(--md-sys-color-outline-variant);
+    }
+
+    /* ── Typing indicator ──────────────────────────────────────────── */
+    .typing-indicator {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 4px;
+      min-height: 30px;
+    }
+    .typing-indicator.hidden { visibility: hidden; }
+
+    .typing-dots {
+      display: flex;
+      align-items: center;
+      gap: 3px;
+    }
+    .typing-dots span {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--md-sys-color-on-surface-variant);
+      animation: dotBounce 1.2s ease-in-out infinite;
+    }
+    .typing-dots span:nth-child(2) { animation-delay: 0.15s; }
+    .typing-dots span:nth-child(3) { animation-delay: 0.30s; }
+
+    @keyframes dotBounce {
+      0%, 60%, 100% { transform: translateY(0);    opacity: 0.5; }
+      30%            { transform: translateY(-4px); opacity: 1;   }
+    }
+
+    .typing-label {
+      font-size: var(--type-label-medium);
+      color: var(--md-sys-color-on-surface-variant);
+      letter-spacing: 0.04em;
+    }
+
+    /* ── Input row ─────────────────────────────────────────────────── */
+    .input-row {
+      display: flex;
+      align-items: flex-end;
+      gap: 12px;
+    }
+
+    .text-field-wrap { flex: 1; }
+
+    .text-field {
+      width: 100%;
+      min-height: 48px;
+      padding: 12px 18px;
+      background: var(--md-sys-color-surface-variant);
+      border: 1.5px solid var(--md-sys-color-outline);
+      border-radius: 28px;
+      color: var(--md-sys-color-on-surface);
+      font-family: inherit;
+      font-size: var(--type-body-large);
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .text-field::placeholder { color: var(--md-sys-color-on-surface-variant); }
+    .text-field:focus { border-color: var(--md-sys-color-primary); }
+
+    /* ── FAB (Send) — MD3 elevation 3 ─────────────────────────────── */
+    .fab {
+      width: 56px;
+      height: 56px;
+      border-radius: 16px;
+      background: var(--md-sys-color-primary);
+      color: var(--md-sys-color-on-primary);
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      box-shadow:
+        0px 4px 8px 3px rgba(0,0,0,0.15),
+        0px 1px 3px rgba(0,0,0,0.30);
+      transition: box-shadow 0.2s, background 0.2s;
+    }
+    .fab:hover {
+      background: color-mix(in srgb, var(--md-sys-color-on-primary) 8%, var(--md-sys-color-primary));
+      box-shadow:
+        0px 6px 10px 4px rgba(0,0,0,0.15),
+        0px 2px 3px rgba(0,0,0,0.30);
+    }
+    .fab:active {
+      box-shadow:
+        0px 2px 6px 2px rgba(0,0,0,0.15),
+        0px 1px 2px rgba(0,0,0,0.30);
+    }
+
+    /* ── Identity bottom sheet ─────────────────────────────────────── */
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      z-index: 100;
+    }
+    .overlay.hidden { display: none; }
+
+    .bottom-sheet {
+      width: 100%;
+      max-width: 600px;
+      background: var(--surface-4);
+      border-radius: 28px 28px 0 0;
+      padding: 12px 24px 32px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      animation: sheetSlideUp 300ms cubic-bezier(0.2,0,0,1);
+    }
+    @keyframes sheetSlideUp {
+      from { transform: translateY(100%); }
+      to   { transform: translateY(0); }
+    }
+
+    .sheet-handle {
+      width: 32px;
+      height: 4px;
+      background: var(--md-sys-color-on-surface-variant);
+      border-radius: 2px;
+      align-self: center;
+      opacity: 0.4;
+    }
+
+    .sheet-title {
+      font-size: var(--type-headline-small);
+      font-weight: 400;
+      color: var(--md-sys-color-on-surface);
+    }
+
+    .sheet-subtitle {
+      font-size: var(--type-body-medium);
+      color: var(--md-sys-color-on-surface-variant);
+      margin-top: -10px;
+    }
+
+    /* ── Emoji grid ────────────────────────────────────────────────── */
+    .emoji-grid {
+      display: grid;
+      grid-template-columns: repeat(10, 1fr);
+      gap: 6px;
+    }
+
+    .emoji-btn {
+      aspect-ratio: 1;
+      border: 2px solid transparent;
+      border-radius: 8px;
+      background: var(--md-sys-color-surface-variant);
+      font-size: 20px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s, border-color 0.15s;
+      line-height: 1;
+    }
+    .emoji-btn:hover {
+      background: var(--surface-3);
+      border-color: var(--md-sys-color-outline);
+    }
+    .emoji-btn.selected {
+      border-color: var(--md-sys-color-primary);
+      background: var(--md-sys-color-primary-container);
+    }
+
+    /* ── Filled button ─────────────────────────────────────────────── */
+    .btn-filled {
+      height: 48px;
+      padding: 0 24px;
+      background: var(--md-sys-color-primary);
+      color: var(--md-sys-color-on-primary);
+      border: none;
+      border-radius: 28px;
+      font-family: inherit;
+      font-size: var(--type-label-large);
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+    .btn-filled:hover  { opacity: 0.92; }
+    .btn-filled:active { opacity: 0.82; }
+
+    /* ── Snackbar ──────────────────────────────────────────────────── */
+    .snackbar-container {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column-reverse;
+      gap: 8px;
+      align-items: center;
+      z-index: 200;
+      pointer-events: none;
+    }
+
+    .snackbar {
+      background: var(--md-sys-color-on-surface);
+      color: var(--md-sys-color-surface);
+      padding: 12px 20px;
+      border-radius: 4px;
+      font-size: var(--type-body-medium);
+      font-weight: 500;
+      min-width: 200px;
+      max-width: 480px;
+      text-align: center;
+      pointer-events: auto;
+      opacity: 0;
+      transform: translateY(8px);
+      transition:
+        opacity  250ms cubic-bezier(0.2,0,0,1),
+        transform 250ms cubic-bezier(0.2,0,0,1);
+    }
+    .snackbar.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+
+  <!-- Top App Bar -->
+  <header class="top-app-bar">
+    <span id="channel-title" class="channel-title"># –</span>
+    <div id="online-chips" class="online-chips"></div>
+    <input
+      id="channel-jump"
+      class="channel-jump"
+      type="number"
+      min="1"
+      max="256"
+      placeholder="# go"
+      title="Jump to channel (1–256), press Enter"
+    />
+  </header>
+
+  <!-- Message list -->
+  <main id="messages" class="message-list" role="log" aria-live="polite" aria-label="Messages"></main>
+
+  <!-- Typing indicator + input -->
+  <div class="bottom-area">
+    <div id="typing-indicator" class="typing-indicator hidden">
+      <div class="typing-dots">
+        <span></span><span></span><span></span>
+      </div>
+      <span id="typing-label" class="typing-label"></span>
+    </div>
+    <div class="input-row">
+      <div class="text-field-wrap">
+        <input
+          id="msg-input"
+          type="text"
+          class="text-field"
+          placeholder="Message…"
+          autocomplete="off"
+          maxlength="2000"
+        />
+      </div>
+      <button id="send-btn" class="fab" aria-label="Send message">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+</div>
+
+<!-- Identity bottom sheet — shown on first visit -->
+<div id="identity-overlay" class="overlay hidden" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
+  <div class="bottom-sheet">
+    <div class="sheet-handle"></div>
+    <h2 id="sheet-title" class="sheet-title">Who are you?</h2>
+    <p class="sheet-subtitle">Pick a name and an emoji — stored only in your browser.</p>
+    <input
+      id="name-input"
+      type="text"
+      class="text-field"
+      placeholder="Your name"
+      maxlength="30"
+      autocomplete="off"
+    />
+    <div id="emoji-grid" class="emoji-grid"></div>
+    <button id="enter-btn" class="btn-filled">Enter chat</button>
+  </div>
+</div>
+
+<!-- Snackbar container -->
+<div id="snackbar-container" class="snackbar-container" aria-live="assertive" aria-atomic="false"></div>
+
+<script>
+'use strict';
+
+/* ── Config ─────────────────────────────────────────────────────── */
+const EMOJIS = [
+  '🌿','🔥','⚡','🌊','🎯','🦋','🌺','🎸','🚀','🌙',
+  '🦊','🐉','🌈','💎','🎭','🦉','🌻','🍀','⭐','🎪',
+];
+
+/* ── Parse & validate channel number ───────────────────────────── */
+const pathParts = location.pathname.split('/');
+const channel = parseInt(pathParts[2], 10);
+if (!channel || channel < 1 || channel > 256) {
+  location.replace('/');
+}
+
+/* ── DOM refs ───────────────────────────────────────────────────── */
+const $title    = document.getElementById('channel-title');
+const $chips    = document.getElementById('online-chips');
+const $jump     = document.getElementById('channel-jump');
+const $messages = document.getElementById('messages');
+const $typing   = document.getElementById('typing-indicator');
+const $typingLbl= document.getElementById('typing-label');
+const $input    = document.getElementById('msg-input');
+const $send     = document.getElementById('send-btn');
+const $overlay  = document.getElementById('identity-overlay');
+const $name     = document.getElementById('name-input');
+const $emojiGrid= document.getElementById('emoji-grid');
+const $enter    = document.getElementById('enter-btn');
+const $snacks   = document.getElementById('snackbar-container');
+
+/* ── State ──────────────────────────────────────────────────────── */
+let myName  = localStorage.getItem('chat_name')  || '';
+let myEmoji = localStorage.getItem('chat_emoji') || '';
+let selectedEmoji = EMOJIS[0];
+
+let ws = null;
+let isTyping = false;
+let typingTimer = null;
+const typingUsers = new Map(); // name → auto-hide timerID
+
+/* ── Boot ───────────────────────────────────────────────────────── */
+$title.textContent = `# ${channel}`;
+$input.placeholder = `Message # ${channel}…`;
+buildEmojiGrid();
+
+if (myName && myEmoji) {
+  connectWS();
+} else {
+  $overlay.classList.remove('hidden');
+  $name.focus();
+}
+
+/* ── WebSocket lifecycle ────────────────────────────────────────── */
+function connectWS() {
+  const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+  ws = new WebSocket(`${proto}://${location.host}/ws/${channel}`);
+
+  ws.onopen = () => {
+    ws.send(JSON.stringify({ type: 'join', name: myName, emoji: myEmoji }));
+  };
+
+  ws.onmessage = ({ data }) => {
+    let msg;
+    try { msg = JSON.parse(data); } catch { return; }
+    dispatch(msg);
+  };
+
+  ws.onclose = () => {
+    showSnackbar('Connection lost — reconnecting in 3s…');
+    setTimeout(connectWS, 3000);
+  };
+
+  ws.onerror = () => ws.close();
+}
+
+/* ── Server → client dispatcher ────────────────────────────────── */
+function dispatch(msg) {
+  switch (msg.type) {
+    case 'history':
+      $messages.innerHTML = '';
+      (msg.msgs || []).forEach(m => renderMsg(m.name, m.emoji, m.text, m.ts, false));
+      scrollBottom(false);
+      break;
+
+    case 'msg':
+      renderMsg(msg.name, msg.emoji, msg.text, msg.ts, true);
+      if (nearBottom()) scrollBottom(true);
+      break;
+
+    case 'join':
+      showSnackbar(`${msg.emoji} ${msg.name} joined`);
+      break;
+
+    case 'leave':
+      showSnackbar(`${msg.emoji} ${msg.name} left`);
+      break;
+
+    case 'online':
+      renderChips(msg.users || []);
+      break;
+
+    case 'typing':
+      onTypingEvent(msg.name, msg.active);
+      break;
+  }
+}
+
+/* ── Render message bubble ──────────────────────────────────────── */
+function renderMsg(name, emoji, text, ts, animate) {
+  const own = name === myName && emoji === myEmoji;
+
+  const row = document.createElement('div');
+  row.className = `msg-row ${own ? 'own' : 'other'}`;
+  if (!animate) row.style.animationDuration = '0ms';
+
+  const wrap = document.createElement('div');
+  wrap.className = 'msg-wrap';
+
+  if (!own) {
+    const meta = document.createElement('div');
+    meta.className = 'msg-meta';
+    meta.textContent = `${emoji} ${name}`;
+    wrap.appendChild(meta);
+  }
+
+  const bubble = document.createElement('div');
+  bubble.className = 'msg-bubble';
+  bubble.textContent = text;
+  wrap.appendChild(bubble);
+
+  const time = document.createElement('div');
+  time.className = 'msg-time';
+  time.textContent = fmtTime(ts);
+  wrap.appendChild(time);
+
+  row.appendChild(wrap);
+  $messages.appendChild(row);
+}
+
+/* ── Online chips ───────────────────────────────────────────────── */
+function renderChips(users) {
+  $chips.innerHTML = '';
+  users.forEach(({ name, emoji }) => {
+    const chip = document.createElement('span');
+    chip.className = 'chip';
+    chip.textContent = `${emoji} ${name}`;
+    $chips.appendChild(chip);
+  });
+}
+
+/* ── Typing indicator ───────────────────────────────────────────── */
+function onTypingEvent(name, active) {
+  if (name === myName) return;
+  if (active) {
+    if (typingUsers.has(name)) clearTimeout(typingUsers.get(name));
+    typingUsers.set(name, setTimeout(() => {
+      typingUsers.delete(name);
+      refreshTyping();
+    }, 3000));
+  } else {
+    if (typingUsers.has(name)) {
+      clearTimeout(typingUsers.get(name));
+      typingUsers.delete(name);
+    }
+  }
+  refreshTyping();
+}
+
+function refreshTyping() {
+  if (typingUsers.size === 0) {
+    $typing.classList.add('hidden');
+    return;
+  }
+  const names = [...typingUsers.keys()].join(', ');
+  $typingLbl.textContent = `${names} ${typingUsers.size === 1 ? 'is' : 'are'} typing…`;
+  $typing.classList.remove('hidden');
+}
+
+/* ── Send input ─────────────────────────────────────────────────── */
+$input.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMsg(); }
+});
+
+$input.addEventListener('input', () => {
+  if (!ws || ws.readyState !== WebSocket.OPEN) return;
+  if (!isTyping) {
+    isTyping = true;
+    ws.send(JSON.stringify({ type: 'typing', active: true }));
+  }
+  clearTimeout(typingTimer);
+  typingTimer = setTimeout(() => {
+    isTyping = false;
+    if (ws && ws.readyState === WebSocket.OPEN)
+      ws.send(JSON.stringify({ type: 'typing', active: false }));
+  }, 2000);
+});
+
+$send.addEventListener('click', sendMsg);
+
+function sendMsg() {
+  const text = $input.value.trim();
+  if (!text || !ws || ws.readyState !== WebSocket.OPEN) return;
+  ws.send(JSON.stringify({ type: 'msg', text }));
+  $input.value = '';
+  clearTimeout(typingTimer);
+  if (isTyping) {
+    isTyping = false;
+    ws.send(JSON.stringify({ type: 'typing', active: false }));
+  }
+}
+
+/* ── Channel jump ───────────────────────────────────────────────── */
+$jump.addEventListener('keydown', e => {
+  if (e.key !== 'Enter') return;
+  const n = parseInt($jump.value, 10);
+  if (n >= 1 && n <= 256) location.href = `/ch/${n}`;
+  else $jump.value = '';
+});
+
+/* ── Identity sheet ─────────────────────────────────────────────── */
+function buildEmojiGrid() {
+  EMOJIS.forEach((emoji, i) => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'emoji-btn' + (i === 0 ? ' selected' : '');
+    btn.textContent = emoji;
+    btn.setAttribute('aria-label', emoji);
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.emoji-btn').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      selectedEmoji = emoji;
+    });
+    $emojiGrid.appendChild(btn);
+  });
+  selectedEmoji = EMOJIS[0];
+}
+
+$enter.addEventListener('click', submitIdentity);
+$name.addEventListener('keydown', e => { if (e.key === 'Enter') submitIdentity(); });
+
+function submitIdentity() {
+  const name = $name.value.trim();
+  if (!name) { $name.focus(); return; }
+  myName  = name;
+  myEmoji = selectedEmoji;
+  localStorage.setItem('chat_name',  myName);
+  localStorage.setItem('chat_emoji', myEmoji);
+  $overlay.classList.add('hidden');
+  connectWS();
+}
+
+/* ── Snackbar ───────────────────────────────────────────────────── */
+function showSnackbar(text) {
+  const el = document.createElement('div');
+  el.className = 'snackbar';
+  el.textContent = text;
+  $snacks.appendChild(el);
+  // double rAF to let the browser compute initial style before transition
+  requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add('visible')));
+  setTimeout(() => {
+    el.classList.remove('visible');
+    setTimeout(() => el.remove(), 300);
+  }, 3000);
+}
+
+/* ── Utilities ──────────────────────────────────────────────────── */
+function scrollBottom(smooth) {
+  $messages.scrollTo({ top: $messages.scrollHeight, behavior: smooth ? 'smooth' : 'instant' });
+}
+function nearBottom() {
+  return $messages.scrollHeight - $messages.scrollTop - $messages.clientHeight < 120;
+}
+function fmtTime(ts) {
+  return new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+</script>
+</body>
+</html>

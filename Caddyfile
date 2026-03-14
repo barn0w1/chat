@@ -1,0 +1,3 @@
+chat.hss-science.org {
+    reverse_proxy chat:8080
+}
