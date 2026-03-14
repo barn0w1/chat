@@ -255,59 +255,59 @@ Before unmounting `IdentitySheet`, animate it out (`translateY(100%)`, fade scri
 
 ### Architecture
 
-- [ ] Create `src/state/actions.ts` — define `ChatAction` union type
-- [ ] Create `src/state/reducer.ts` — pure `chatReducer(state, action)` + `initialState`
-  - [ ] Handle `HISTORY` (set messages, compute grouped flags)
-  - [ ] Handle `MSG_RECEIVED` (append, compute grouped + isLastInGroup, fix previous last-in-group)
-  - [ ] Handle `JOIN` / `LEAVE` (push snackbar)
-  - [ ] Handle `ONLINE` (replace onlineUsers)
-  - [ ] Handle `TYPING_START` / `TYPING_STOP` / `TYPING_EXPIRE`
-  - [ ] Handle `SNACKBAR_ADD` / `SNACKBAR_REMOVE`
-  - [ ] Handle `SET_IDENTITY` (write to localStorage as side-effect-free computed step — actual write in hook)
-  - [ ] Handle `SET_CONNECTED`
-- [ ] Create `src/hooks/useChatReducer.ts` — wraps `useReducer`, returns `{ state, dispatch }`
-- [ ] Refactor `src/hooks/useWebSocket.ts` to accept `dispatch: Dispatch<ChatAction>` replacing all callbacks
-  - [ ] Add proper type narrowing for `ServerEvent` union (remove `as unknown as` casts)
-  - [ ] Dispatch `SET_CONNECTED` on open/close
-  - [ ] Remove unused `reconnecting` return value
-- [ ] Create `src/hooks/useTypingExpiry.ts` — timer-based auto-expire hook
-- [ ] Update `src/types.ts`
-  - [ ] Add `grouped: boolean` and `isLastInGroup: boolean` to `ChatMsg`
-  - [ ] Remove `live` from `ChatMsg` (replace with `isNew` or compute at dispatch time)
-- [ ] Refactor `App.tsx`
-  - [ ] Remove all `useState` (state moves to reducer)
-  - [ ] Remove all `useCallback` event handlers (logic moves to reducer)
-  - [ ] Remove `typingTimers` ref (moves to `useTypingExpiry`)
-  - [ ] Remove `msgCounter` global (use `crypto.randomUUID()` in reducer)
-  - [ ] Move `window.location.replace` into `useEffect`
-  - [ ] Move `localStorage.setItem` identity write into identity dispatch handler
-  - [ ] Remove `reconnecting` from `useWebSocket` destructuring (unused)
-  - [ ] Wire `useChatReducer` → `useWebSocket(dispatch)` → components
-- [ ] Move `localStorage.setItem('identity', …)` from `IdentitySheet` to the `SET_IDENTITY` reducer action handler (side-effect in dispatch middleware or App `useEffect`)
+- [x] Create `src/state/actions.ts` — define `ChatAction` union type
+- [x] Create `src/state/reducer.ts` — pure `chatReducer(state, action)` + `initialState`
+  - [x] Handle `HISTORY` (set messages, compute grouped flags)
+  - [x] Handle `MSG_RECEIVED` (append, compute grouped + isLastInGroup, fix previous last-in-group)
+  - [x] Handle `JOIN` / `LEAVE` (push snackbar)
+  - [x] Handle `ONLINE` (replace onlineUsers)
+  - [x] Handle `TYPING_START` / `TYPING_STOP` / `TYPING_EXPIRE`
+  - [x] Handle `SNACKBAR_ADD` / `SNACKBAR_REMOVE`
+  - [x] Handle `SET_IDENTITY` (write to localStorage as side-effect-free computed step — actual write in hook)
+  - [x] Handle `SET_CONNECTED`
+- [x] Create `src/hooks/useChatReducer.ts` — wraps `useReducer`, returns `{ state, dispatch }`
+- [x] Refactor `src/hooks/useWebSocket.ts` to accept `dispatch: Dispatch<ChatAction>` replacing all callbacks
+  - [x] Add proper type narrowing for `ServerEvent` union (remove `as unknown as` casts)
+  - [x] Dispatch `SET_CONNECTED` on open/close
+  - [x] Remove unused `reconnecting` return value
+- [x] Create `src/hooks/useTypingExpiry.ts` — timer-based auto-expire hook
+- [x] Update `src/types.ts`
+  - [x] Add `grouped: boolean` and `isLastInGroup: boolean` to `ChatMsg`
+  - [x] Remove `live` from `ChatMsg` (replace with `isNew` or compute at dispatch time)
+- [x] Refactor `App.tsx`
+  - [x] Remove all `useState` (state moves to reducer)
+  - [x] Remove all `useCallback` event handlers (logic moves to reducer)
+  - [x] Remove `typingTimers` ref (moves to `useTypingExpiry`)
+  - [x] Remove `msgCounter` global (use `crypto.randomUUID()` in reducer)
+  - [x] Move `window.location.replace` into `useEffect`
+  - [x] Move `localStorage.setItem` identity write into identity dispatch handler
+  - [x] Remove `reconnecting` from `useWebSocket` destructuring (unused)
+  - [x] Wire `useChatReducer` → `useWebSocket(dispatch)` → components
+- [x] Move `localStorage.setItem('identity', …)` from `IdentitySheet` to the `SET_IDENTITY` reducer action handler (side-effect in dispatch middleware or App `useEffect`)
 
 ### Performance
 
-- [ ] Wrap `MessageBubble` in `React.memo`
-- [ ] Wrap `MessageList` in `React.memo`
-- [ ] Wrap `TopAppBar` in `React.memo`
-- [ ] Wrap `TypingIndicator` in `React.memo`
-- [ ] Wrap `InputBar` in `React.memo`
-- [ ] Wrap `IdentitySheet` in `React.memo`
-- [ ] Replace `checkNearBottom` + `scrollTo` with a bottom sentinel `ref` + `scrollIntoView`
-- [ ] Add `content-visibility: auto; contain-intrinsic-size: 0 64px` to message row wrappers
-- [ ] Stop animating typing dots when list is empty (`animation: none`)
-- [ ] Use `useCallback` for `handleSend`, `handleIdentitySubmit`, `removeSnackbar` in App
+- [x] Wrap `MessageBubble` in `React.memo`
+- [x] Wrap `MessageList` in `React.memo`
+- [x] Wrap `TopAppBar` in `React.memo`
+- [x] Wrap `TypingIndicator` in `React.memo`
+- [x] Wrap `InputBar` in `React.memo`
+- [x] Wrap `IdentitySheet` in `React.memo`
+- [x] Replace `checkNearBottom` + `scrollTo` with a bottom sentinel `ref` + `scrollIntoView`
+- [x] Add `content-visibility: auto; contain-intrinsic-size: 0 64px` to message row wrappers
+- [x] Stop animating typing dots when list is empty (`animation: none`)
+- [x] Use `useCallback` for `handleSend`, `handleIdentitySubmit`, `removeSnackbar` in App
 
 ### UI
 
-- [ ] Show timestamp only on `isLastInGroup` bubble, not every bubble
-- [ ] Add scroll-to-bottom FAB (renders when `!nearBottom`)
-- [ ] Add unread count badge on the FAB (count messages received while scrolled up)
-- [ ] Add empty state in `MessageList` when `messages.length === 0`
-- [ ] Add date separators between messages from different calendar days
-- [ ] Truncate online user chip list to first 3 + `+N` overflow chip in `TopAppBar`
-- [ ] Replace channel jump `<input type="number">` with MD3 styled text field (`inputmode="numeric"`)
-- [ ] Move reconnecting state into `TopAppBar` (replace fixed overlay banner)
-- [ ] Add exit animation to `IdentitySheet` (slide down + scrim fade before unmount)
-- [ ] Run `npx tsc --noEmit` — fix all type errors
-- [ ] Run `npm run build` — confirm clean build
+- [x] Show timestamp only on `isLastInGroup` bubble, not every bubble
+- [x] Add scroll-to-bottom FAB (renders when `!nearBottom`)
+- [x] Add unread count badge on the FAB (count messages received while scrolled up)
+- [x] Add empty state in `MessageList` when `messages.length === 0`
+- [x] Add date separators between messages from different calendar days
+- [x] Truncate online user chip list to first 3 + `+N` overflow chip in `TopAppBar`
+- [x] Replace channel jump `<input type="number">` with MD3 styled text field (`inputmode="numeric"`)
+- [x] Move reconnecting state into `TopAppBar` (replace fixed overlay banner)
+- [x] Add exit animation to `IdentitySheet` (slide down + scrim fade before unmount)
+- [x] Run `npx tsc --noEmit` — fix all type errors
+- [x] Run `npm run build` — confirm clean build
