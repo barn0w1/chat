@@ -1,3 +1,7 @@
-chat.hss-science.org {
+{
+    auto_https off
+}
+
+c.hss-science.org {
     reverse_proxy chat:8080
 }
