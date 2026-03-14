@@ -3,5 +3,15 @@
 }
 
 c.hss-science.org {
-    reverse_proxy chat:8080
+    handle /ws/* {
+        reverse_proxy backend:8080
+    }
+
+    handle /api/* {
+        reverse_proxy backend:8080
+    }
+
+    handle {
+        reverse_proxy frontend:3000
+    }
 }
